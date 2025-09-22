@@ -18,6 +18,7 @@ import {
 import Link from 'next/link'
 
 export default function DemoPage() {
+  console.log('Demo page loaded - Test update for Vercel auto-deployment')
   return (
     <div className="min-h-screen bg-gray-50">
       <Navigation />
