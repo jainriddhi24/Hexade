@@ -1,8 +1,20 @@
 import { describe, it, expect, beforeEach, afterEach } from '@jest/globals'
-import { NextRequest } from 'next/server'
 import '@testing-library/jest-dom'
 import { POST as registerHandler } from '@/app/api/auth/register/route'
 import { POST as loginHandler } from '@/app/api/auth/login/route'
+import { NextRequest } from 'next/server'
+import '../__mocks__/next-setup'
+
+// Create a test request
+function createTestRequest(url: string, method: string, body: any) {
+  return new NextRequest(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body)
+  })
+}
 
 // Mock Prisma
 jest.mock('@/lib/db', () => ({

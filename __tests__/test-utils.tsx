@@ -4,17 +4,36 @@ import { ThemeProvider } from '@/components/theme-provider'
 import type { ReactElement, ReactNode } from 'react'
 import type { RenderOptions } from '@testing-library/react'
 
+const mockUsePath = jest.fn(() => '/')
+
 jest.mock('next/navigation', () => ({
-  useRouter() {
-    return {
-      push: jest.fn(),
-      back: jest.fn(),
-      forward: jest.fn(),
-      refresh: jest.fn(),
-      prefetch: jest.fn(),
-      replace: jest.fn(),
-    }
-  },
+  useRouter: () => ({
+    push: jest.fn(),
+    back: jest.fn(),
+    forward: jest.fn(),
+    refresh: jest.fn(),
+    prefetch: jest.fn(),
+    replace: jest.fn(),
+  }),
+  usePathname: () => '/',
+  useSearchParams: () => null,
+  useSelectedLayoutSegment: () => null,
+}))
+
+jest.mock('@/hooks/use-auth', () => ({
+  useAuth: () => ({
+    user: null,
+    logout: jest.fn(),
+  }),
+}))
+
+jest.mock('@/hooks/use-notifications', () => ({
+  useNotifications: () => ({
+    notifications: [],
+    markAsRead: jest.fn(),
+    markAllAsRead: jest.fn(),
+    clearAll: jest.fn(),
+  }),
 }))
 
 interface WrapperProps {

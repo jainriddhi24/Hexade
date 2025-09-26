@@ -16,6 +16,17 @@ Object.defineProperty(window, 'matchMedia', {
   })),
 })
 
+// Setup NextRequest
+global.Request = class extends Request {
+  constructor(input, init) {
+    if (typeof input === 'string') {
+      super(new URL(input, 'http://localhost').toString(), init)
+    } else {
+      super(input, init)
+    }
+  }
+}
+
 // Mock next/navigation
 const useRouter = jest.fn()
 useRouter.mockReturnValue({

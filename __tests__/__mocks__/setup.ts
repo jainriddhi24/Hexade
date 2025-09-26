@@ -11,6 +11,9 @@ jest.mock('next/navigation', () => ({
       replace: jest.fn(),
     }
   },
+  usePathname() {
+    return '/'
+  },
 }))
 
 jest.mock('next/server', () => ({

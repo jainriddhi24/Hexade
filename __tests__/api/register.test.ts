@@ -1,6 +1,8 @@
 import { describe, it, expect, jest } from '@jest/globals'
+import { POST } from '@/app/api/auth/register/route'
 import { hashPassword } from '@/lib/auth'
-import { NextResponse } from 'next/server'
+import { NextRequest } from 'next/server'
+import '../__mocks__/next-setup'
 
 jest.mock('@/lib/db', () => ({
   prisma: {
@@ -12,6 +14,17 @@ jest.mock('@/lib/db', () => ({
 }))
 
 const { prisma } = require('@/lib/db')
+
+// Create a test request
+function createTestRequest(url: string, method: string, body: any) {
+  return new NextRequest(url, {
+    method,
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body)
+  })
+}
 
 describe('api/auth/register', () => {
   it('should register a new client successfully', async () => {
@@ -32,17 +45,13 @@ describe('api/auth/register', () => {
       emailVerified: false,
     })
 
-    const request = new Request('/api/auth/register', {
-      method: 'POST',
-      body: JSON.stringify(testUser),
-    })
+    const request = createTestRequest('http://localhost:3000/api/auth/register', 'POST', testUser)
 
-    const response = await fetch(request)
+    const response = await POST(request)
     const data = await response.json()
 
     expect(response.status).toBe(201)
-    expect(data.success).toBe(true)
-    expect(data.user).toBeDefined()
+    expect(data.message).toBe('User registered successfully')
     expect(data.user.email).toBe(testUser.email)
     expect(data.user.role).toBe(testUser.role)
   })
