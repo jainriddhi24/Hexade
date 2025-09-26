@@ -1,0 +1,786 @@
+openapi: 3.0.3
+info:
+  title: Hexade Case Management API
+  description: |
+    Modern case management and hearing platform for legal professionals.
+    
+    ## Features
+    - WebRTC video hearings with real-time chat
+    - Document management with e-signing capabilities
+    - AI-powered document summarization
+    - Role-based access control (Client, Lawyer, Judge, Admin)
+    - Multi-language support
+    
+    ## Authentication
+    All API endpoints require authentication via JWT tokens stored in secure HTTP-only cookies.
+    
+    ## Rate Limiting
+    API requests are rate limited to 100 requests per 15-minute window per user.
+    
+    ## Environment Variables Required
+    - `DATABASE_URL`: PostgreSQL connection string
+    - `JWT_SECRET`: Secret key for JWT token signing
+    - `S3_BUCKET`: AWS S3 bucket name for document storage
+    - `S3_REGION`: AWS S3 region
+    - `S3_ACCESS_KEY_ID`: AWS access key ID
+    - `S3_SECRET_ACCESS_KEY`: AWS secret access key
+    - `SENDGRID_API_KEY`: SendGrid API key for email notifications
+    - `OPENAI_API_KEY`: OpenAI API key for AI summarization (optional)
+    - `REDIS_URL`: Redis connection string for background jobs (optional)
+  version: 1.0.0
+  contact:
+    name: Hexade Team
+    email: contact@hexade.com
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: http://localhost:3000/api
+    description: Development server
+  - url: https://hexade-portal.vercel.app/api
+    description: Production server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+                - role
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: user@example.com
+                password:
+                  type: string
+                  minLength: 8
+                  example: securepassword123
+                name:
+                  type: string
+                  minLength: 2
+                  example: John Doe
+                role:
+                  type: string
+                  enum: [CLIENT, LAWYER]
+                  example: CLIENT
+                phone:
+                  type: string
+                  example: +1-555-123-4567
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Validation error
+        '409':
+          description: User already exists
+
+  /auth/login:
+    post:
+      summary: Login user
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Invalid credentials
+
+  /auth/logout:
+    post:
+      summary: Logout user
+      tags:
+        - Authentication
+      responses:
+        '200':
+          description: Logout successful
+
+  /auth/me:
+    get:
+      summary: Get current user
+      tags:
+        - Authentication
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+
+  /lawyers:
+    get:
+      summary: Get lawyers directory
+      tags:
+        - Lawyers
+      parameters:
+        - name: search
+          in: query
+          description: Search by name, practice area, or district
+          schema:
+            type: string
+        - name: practiceArea
+          in: query
+          description: Filter by practice area
+          schema:
+            type: string
+        - name: district
+          in: query
+          description: Filter by district
+          schema:
+            type: string
+        - name: verified
+          in: query
+          description: Filter by verification status
+          schema:
+            type: boolean
+        - name: available
+          in: query
+          description: Filter by availability for new cases
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          description: Page number
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          description: Items per page
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of lawyers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  lawyers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LawyerProfile'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+
+  /lawyers/{id}:
+    get:
+      summary: Get lawyer profile
+      tags:
+        - Lawyers
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lawyer profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LawyerProfile'
+        '404':
+          description: Lawyer not found
+
+  /cases:
+    get:
+      summary: Get cases
+      tags:
+        - Cases
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [FILED, ASSIGNED, IN_PROGRESS, HEARING_SCHEDULED, COMPLETED, CLOSED]
+        - name: caseType
+          in: query
+          schema:
+            type: string
+        - name: priority
+          in: query
+          schema:
+            type: string
+            enum: [low, normal, high, urgent]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of cases
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  cases:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Case'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Create new case
+      tags:
+        - Cases
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - caseType
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                caseType:
+                  type: string
+                courtName:
+                  type: string
+                jurisdiction:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+                priority:
+                  type: string
+                  enum: [low, normal, high, urgent]
+                  default: normal
+      responses:
+        '201':
+          description: Case created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Case'
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /hearings:
+    get:
+      summary: Get hearings
+      tags:
+        - Hearings
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: caseId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of hearings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  hearings:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Hearing'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+  /signaling:
+    post:
+      summary: WebRTC signaling endpoint
+      tags:
+        - WebRTC
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - action
+                - roomId
+              properties:
+                action:
+                  type: string
+                  enum: [join, offer, answer, ice-candidate, leave]
+                roomId:
+                  type: string
+                data:
+                  type: object
+      responses:
+        '200':
+          description: Signaling response
+        '400':
+          description: Invalid request
+        '401':
+          description: Unauthorized
+
+  /documents:
+    get:
+      summary: Get documents
+      tags:
+        - Documents
+      security:
+        - cookieAuth: []
+      parameters:
+        - name: caseId
+          in: query
+          schema:
+            type: string
+        - name: documentType
+          in: query
+          schema:
+            type: string
+            enum: [PETITION, AFFIDAVIT, EVIDENCE, ORDER, TRANSCRIPT, OTHER]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: List of documents
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  documents:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Document'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+        '401':
+          description: Unauthorized
+
+    post:
+      summary: Create document
+      tags:
+        - Documents
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - documentType
+                - caseId
+              properties:
+                title:
+                  type: string
+                description:
+                  type: string
+                documentType:
+                  type: string
+                  enum: [PETITION, AFFIDAVIT, EVIDENCE, ORDER, TRANSCRIPT, OTHER]
+                caseId:
+                  type: string
+                fileSize:
+                  type: integer
+                mimeType:
+                  type: string
+      responses:
+        '201':
+          description: Document created with upload URL
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  document:
+                    $ref: '#/components/schemas/Document'
+                  uploadUrl:
+                    type: string
+                    description: Presigned S3 URL for file upload
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+  /summarize:
+    post:
+      summary: Generate AI summary
+      tags:
+        - AI
+      security:
+        - cookieAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                documentId:
+                  type: string
+                  description: ID of document to summarize
+                text:
+                  type: string
+                  description: Raw text to summarize
+                type:
+                  type: string
+                  enum: [document, case, hearing]
+      responses:
+        '200':
+          description: Summary generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  summary:
+                    type: string
+                  documentId:
+                    type: string
+                  timestamp:
+                    type: string
+                    format: date-time
+        '400':
+          description: Validation error
+        '401':
+          description: Unauthorized
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: auth-token
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        role:
+          type: string
+          enum: [CLIENT, LAWYER, JUDGE, ADMIN]
+        phone:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        language:
+          type: string
+          default: en
+        timezone:
+          type: string
+          default: UTC
+        emailNotifications:
+          type: boolean
+          default: true
+        smsNotifications:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    LawyerProfile:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        avatar:
+          type: string
+        bio:
+          type: string
+        phone:
+          type: string
+        barNumber:
+          type: string
+        practiceAreas:
+          type: array
+          items:
+            type: string
+        districts:
+          type: array
+          items:
+            type: string
+        experienceYears:
+          type: integer
+        rating:
+          type: number
+          format: float
+        verified:
+          type: boolean
+        consultationFee:
+          type: number
+          format: float
+        languages:
+          type: array
+          items:
+            type: string
+        availableForNewCases:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Case:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        caseType:
+          type: string
+        status:
+          type: string
+          enum: [FILED, ASSIGNED, IN_PROGRESS, HEARING_SCHEDULED, COMPLETED, CLOSED]
+        caseNumber:
+          type: string
+        courtName:
+          type: string
+        jurisdiction:
+          type: string
+        filingDate:
+          type: string
+          format: date-time
+        hearingDate:
+          type: string
+          format: date-time
+        tags:
+          type: array
+          items:
+            type: string
+        priority:
+          type: string
+          enum: [low, normal, high, urgent]
+        client:
+          $ref: '#/components/schemas/User'
+        assignedLawyer:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Hearing:
+      type: object
+      properties:
+        id:
+          type: string
+        caseId:
+          type: string
+        scheduledAt:
+          type: string
+          format: date-time
+        duration:
+          type: integer
+          description: Duration in minutes
+        status:
+          type: string
+          enum: [SCHEDULED, IN_PROGRESS, COMPLETED, CANCELLED]
+        roomId:
+          type: string
+        meetingUrl:
+          type: string
+        agenda:
+          type: string
+        notes:
+          type: string
+        recordingUrl:
+          type: string
+        transcriptUrl:
+          type: string
+        summary:
+          type: string
+        judge:
+          $ref: '#/components/schemas/User'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Document:
+      type: object
+      properties:
+        id:
+          type: string
+        caseId:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        documentType:
+          type: string
+          enum: [PETITION, AFFIDAVIT, EVIDENCE, ORDER, TRANSCRIPT, OTHER]
+        s3Key:
+          type: string
+        s3Url:
+          type: string
+        fileSize:
+          type: integer
+        mimeType:
+          type: string
+        signerStatus:
+          type: string
+          enum: [PENDING, SIGNED, REJECTED]
+        summary:
+          type: string
+        extractedText:
+          type: string
+        uploadedBy:
+          $ref: '#/components/schemas/User'
+        signedBy:
+          $ref: '#/components/schemas/User'
+        signedAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Pagination:
+      type: object
+      properties:
+        page:
+          type: integer
+        limit:
+          type: integer
+        total:
+          type: integer
+        pages:
+          type: integer
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        details:
+          type: array
+          items:
+            type: object
