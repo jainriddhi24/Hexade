@@ -61,8 +61,24 @@ export async function GET(request: NextRequest) {
     const messageWhere = user.role === 'CLIENT'
       ? { OR: [{ senderId: user.id }, { hearing: { case: { clientId: user.id } } }] }
       : user.role === 'LAWYER'
-      ? { OR: [{ senderId: user.id }, { hearing: { case: { OR: [{ clientId: user.id }, { assignedLawyerId: user.id }] } }] } }
-      : {}
+
+  ? {
+      OR: [
+        { senderId: user.id },
+        {
+          hearing: {
+            case: {
+              OR: [
+                { clientId: user.id },
+                { assignedLawyerId: user.id }
+              ]
+            }
+          }
+        }
+      ]
+    }
+  : {}
+
 
     // Search cases
     if (searchData.type === 'all' || searchData.type === 'cases') {

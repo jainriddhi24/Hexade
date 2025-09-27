@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { prisma } from '@/lib/db'
-import { hashPassword, generateToken, createSecureCookie } from '@/lib/auth'
+import { hashPassword, generateToken, setAuthCookie } from '@/lib/auth'
 import { validateEmail } from '@/lib/utils'
 import { NotificationService } from '@/lib/email'
 
@@ -102,7 +102,7 @@ export async function POST(request: NextRequest) {
     )
 
     // Set secure cookie
-  response.cookies.set(createSecureCookie(jwtToken))
+  setAuthCookie(response, jwtToken)
 
 
     return response
