@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     const messageWhere = user.role === 'CLIENT'
       ? { OR: [{ senderId: user.id }, { hearing: { case: { clientId: user.id } } }] }
       : user.role === 'LAWYER'
-      ? { OR: [{ senderId: user.id }, { hearing: { case: { OR: [{ clientId: user.id }, { assignedLawyerId: user.id }] } }] } }
+      ? { OR: [{ senderId: user.id }, { hearing: { case: { OR: [{ clientId: user.id }, { assignedLawyerId: user.id }] } } }] }
       : {}
 
     // Search cases
@@ -70,10 +70,10 @@ export async function GET(request: NextRequest) {
         where: {
           ...caseWhere,
           OR: [
-            { title: { contains: searchData.query, mode: 'insensitive' } },
-            { caseNumber: { contains: searchData.query, mode: 'insensitive' } },
-            { description: { contains: searchData.query, mode: 'insensitive' } },
-            { tags: { has: searchData.query } },
+            { title: { contains: searchData.query } },
+            { caseNumber: { contains: searchData.query } },
+            { description: { contains: searchData.query } },
+            { tags: { contains: searchData.query } },
           ],
         },
         include: {
@@ -93,9 +93,9 @@ export async function GET(request: NextRequest) {
         where: {
           ...hearingWhere,
           OR: [
-            { agenda: { contains: searchData.query, mode: 'insensitive' } },
-            { case: { title: { contains: searchData.query, mode: 'insensitive' } } },
-            { case: { caseNumber: { contains: searchData.query, mode: 'insensitive' } } },
+            { agenda: { contains: searchData.query } },
+            { case: { title: { contains: searchData.query } } },
+            { case: { caseNumber: { contains: searchData.query } } },
           ],
         },
         include: {
@@ -123,11 +123,10 @@ export async function GET(request: NextRequest) {
         where: {
           ...documentWhere,
           OR: [
-            { title: { contains: searchData.query, mode: 'insensitive' } },
-            { description: { contains: searchData.query, mode: 'insensitive' } },
-            { tags: { has: searchData.query } },
-            { case: { title: { contains: searchData.query, mode: 'insensitive' } } },
-            { case: { caseNumber: { contains: searchData.query, mode: 'insensitive' } } },
+            { title: { contains: searchData.query } },
+            { description: { contains: searchData.query } },
+            { case: { title: { contains: searchData.query } } },
+            { case: { caseNumber: { contains: searchData.query } } },
           ],
         },
         include: {
@@ -153,8 +152,8 @@ export async function GET(request: NextRequest) {
         where: {
           ...messageWhere,
           OR: [
-            { content: { contains: searchData.query, mode: 'insensitive' } },
-            { sender: { name: { contains: searchData.query, mode: 'insensitive' } } },
+            { content: { contains: searchData.query } },
+            { sender: { name: { contains: searchData.query } } },
           ],
         },
         include: {
@@ -185,8 +184,8 @@ export async function GET(request: NextRequest) {
       const users = await prisma.user.findMany({
         where: {
           OR: [
-            { name: { contains: searchData.query, mode: 'insensitive' } },
-            { email: { contains: searchData.query, mode: 'insensitive' } },
+            { name: { contains: searchData.query } },
+            { email: { contains: searchData.query } },
           ],
         },
         select: {
