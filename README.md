@@ -23,7 +23,7 @@ A modern, comprehensive case management and hearing platform for legal professio
 - **Real-time**: WebRTC, WebSockets
 - **AI**: OpenAI GPT (with mock fallback)
 - **Email**: SendGrid
-- **Deployment**: Vercel
+- **Deployment**: Netlify
 
 ## 📋 Prerequisites
 
