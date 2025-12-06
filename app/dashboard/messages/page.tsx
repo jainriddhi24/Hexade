@@ -172,7 +172,12 @@ export default function MessagesPage() {
             senderId: 'ai-assistant',
             sender: { id: 'ai-assistant', name: 'AI Legal Assistant', email: 'ai@hexade.com', role: 'AI' },
             createdAt: new Date(Date.now() - 60000).toISOString(),
-            messageType: 'text'
+            messageType: 'text',
+            hearing: {
+              id: 'default',
+              scheduledAt: new Date().toISOString(),
+              case: { id: 'default', title: 'General Inquiry', caseNumber: 'N/A' }
+            }
           }
         ]
         setMessages(sampleMessages)
@@ -219,7 +224,7 @@ export default function MessagesPage() {
           const data = await response.json()
           
           // Add both the original message and auto-reply to messages
-          const newMessages = []
+          const newMessages: Message[] = []
           if (data.originalMessage) {
             newMessages.push(data.originalMessage)
           }
@@ -402,7 +407,7 @@ export default function MessagesPage() {
                               </span>
                             </div>
                             <div className="flex items-center space-x-2 mt-1">
-                              {conversation.isGeneral ? (
+                              {(conversation as any).isGeneral ? (
                                 <Badge className="text-xs bg-blue-100 text-blue-800">
                                   General Query
                                 </Badge>
@@ -418,7 +423,7 @@ export default function MessagesPage() {
                               )}
                             </div>
                             <p className="text-sm text-gray-600 truncate mt-1">
-                              {conversation.isGeneral 
+                              {(conversation as any).isGeneral 
                                 ? 'General legal consultation' 
                                 : conversation.cases.map(c => c.caseNumber).join(', ')
                               }
@@ -580,19 +585,20 @@ export default function MessagesPage() {
                               <div className="text-sm whitespace-pre-wrap">
                                 {(() => {
                                   // Handle different content types
-                                  if (typeof message.content === 'string') {
-                                    return message.content
-                                  } else if (typeof message.content === 'object' && message.content !== null) {
+                                  const content: any = message.content
+                                  if (typeof content === 'string') {
+                                    return content
+                                  } else if (typeof content === 'object' && content !== null) {
                                     // If content is an object, try to extract text
-                                    if (message.content.text) {
-                                      return message.content.text
-                                    } else if (message.content.message) {
-                                      return message.content.message
-                                    } else if (message.content.content) {
-                                      return message.content.content
+                                    if (content.text) {
+                                      return content.text
+                                    } else if (content.message) {
+                                      return content.message
+                                    } else if (content.content) {
+                                      return content.content
                                     } else {
                                       // Fallback: stringify the object
-                                      return JSON.stringify(message.content)
+                                      return JSON.stringify(content)
                                     }
                                   } else {
                                     return String(message.content || '')

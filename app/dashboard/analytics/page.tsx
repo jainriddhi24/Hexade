@@ -62,10 +62,10 @@ export default function AnalyticsPage() {
               { name: 'Filed', value: 0, color: 'bg-yellow-500' },
             ]},
             { title: 'Monthly Spending', data: [
-              { name: 'Jan', value: 2500 },
-              { name: 'Feb', value: 3200 },
-              { name: 'Mar', value: 1800 },
-              { name: 'Apr', value: 1000 },
+              { name: 'Jan', value: 2500, color: 'bg-blue-500' },
+              { name: 'Feb', value: 3200, color: 'bg-green-500' },
+              { name: 'Mar', value: 1800, color: 'bg-yellow-500' },
+              { name: 'Apr', value: 1000, color: 'bg-purple-500' },
             ]},
           ]
         }
@@ -84,10 +84,10 @@ export default function AnalyticsPage() {
               { name: 'Family', value: 12, color: 'bg-green-500' },
             ]},
             { title: 'Monthly Hearings', data: [
-              { name: 'Jan', value: 45 },
-              { name: 'Feb', value: 52 },
-              { name: 'Mar', value: 38 },
-              { name: 'Apr', value: 48 },
+              { name: 'Jan', value: 45, color: 'bg-blue-500' },
+              { name: 'Feb', value: 52, color: 'bg-green-500' },
+              { name: 'Mar', value: 38, color: 'bg-yellow-500' },
+              { name: 'Apr', value: 48, color: 'bg-purple-500' },
             ]},
           ]
         }
@@ -193,10 +193,10 @@ export default function AnalyticsPage() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    {chart.data.map((item, i) => (
+                    {chart.data.map((item: any, i: number) => (
                       <div key={i} className="flex items-center justify-between">
                         <div className="flex items-center">
-                          <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>
+                          {item.color && <div className={`w-3 h-3 rounded-full ${item.color} mr-2`}></div>}
                           <span className="text-sm text-gray-600">{item.name}</span>
                         </div>
                         <span className="text-sm font-medium text-gray-900">{item.value}</span>

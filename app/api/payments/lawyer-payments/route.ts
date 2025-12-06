@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
         client: true,
         case: true,
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { createdAt: 'desc' },
     });
     return NextResponse.json({ payments });
   } catch (error) {

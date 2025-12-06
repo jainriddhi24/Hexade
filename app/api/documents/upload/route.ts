@@ -79,15 +79,12 @@ export async function POST(request: NextRequest) {
       data: {
         title: title || file.name,
         description,
-        fileUrl: uploadResult.url!,
+        s3Url: uploadResult.url!,
         s3Key: uploadResult.key!,
-        fileType: file.type,
+        mimeType: file.type,
         fileSize: file.size,
-        caseId: caseId || null,
+        caseId: caseId!,
         uploadedById: user.id,
-        isPublic,
-        tags,
-        versionNumber: 1,
         documentType: 'GENERAL',
       },
       include: {

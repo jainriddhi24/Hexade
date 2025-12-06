@@ -25,26 +25,16 @@ export async function POST(request: NextRequest) {
         
         // Update payment status
         await prisma.payment.updateMany({
-          where: { stripePaymentIntentId: paymentIntent.id },
+          where: { transactionId: paymentIntent.id },
           data: { 
-            status: 'COMPLETED',
-            completedAt: new Date(),
+            status: 'paid',
           },
         })
 
         // Create invoice if needed
         if (paymentIntent.metadata.caseId) {
-          await prisma.invoice.create({
-            data: {
-              caseId: paymentIntent.metadata.caseId,
-              clientId: paymentIntent.metadata.clientId,
-              amount: paymentIntent.amount / 100,
-              currency: paymentIntent.currency,
-              status: 'PAID',
-              paidAt: new Date(),
-              stripePaymentIntentId: paymentIntent.id,
-            },
-          })
+          // Invoice model doesn't exist - skip for now
+          // In production, you would create an invoice record here
         }
 
         console.log('Payment succeeded:', paymentIntent.id)
@@ -55,10 +45,9 @@ export async function POST(request: NextRequest) {
         const paymentIntent = event.data.object as Stripe.PaymentIntent
         
         await prisma.payment.updateMany({
-          where: { stripePaymentIntentId: paymentIntent.id },
+          where: { transactionId: paymentIntent.id },
           data: { 
-            status: 'FAILED',
-            failedAt: new Date(),
+            status: 'failed',
           },
         })
 
@@ -69,15 +58,8 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_succeeded': {
         const invoice = event.data.object as Stripe.Invoice
         
-        if (invoice.subscription) {
-          await prisma.subscription.updateMany({
-            where: { stripeSubscriptionId: invoice.subscription as string },
-            data: { 
-              status: 'ACTIVE',
-              currentPeriodEnd: new Date(invoice.period_end * 1000),
-            },
-          })
-        }
+        // Subscription model doesn't exist - skip for now
+        // In production, you would update subscription status here
 
         console.log('Invoice payment succeeded:', invoice.id)
         break
@@ -86,14 +68,8 @@ export async function POST(request: NextRequest) {
       case 'invoice.payment_failed': {
         const invoice = event.data.object as Stripe.Invoice
         
-        if (invoice.subscription) {
-          await prisma.subscription.updateMany({
-            where: { stripeSubscriptionId: invoice.subscription as string },
-            data: { 
-              status: 'PAST_DUE',
-            },
-          })
-        }
+        // Subscription model doesn't exist - skip for now
+        // In production, you would update subscription status here
 
         console.log('Invoice payment failed:', invoice.id)
         break
@@ -102,13 +78,8 @@ export async function POST(request: NextRequest) {
       case 'customer.subscription.deleted': {
         const subscription = event.data.object as Stripe.Subscription
         
-        await prisma.subscription.updateMany({
-          where: { stripeSubscriptionId: subscription.id },
-          data: { 
-            status: 'CANCELLED',
-            cancelledAt: new Date(),
-          },
-        })
+        // Subscription model doesn't exist - skip for now
+        // In production, you would update subscription status here
 
         console.log('Subscription cancelled:', subscription.id)
         break

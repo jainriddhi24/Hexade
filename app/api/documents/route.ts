@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 // Fallback local enum-like values to avoid TS errors while Prisma client/enums are missing.
 // Once you regenerate Prisma Client (recommended) you can revert to importing enums from @prisma/client.
-export const UserRole = {
+const UserRole = {
   CLIENT: 'CLIENT',
   LAWYER: 'LAWYER',
   JUDGE: 'JUDGE',

@@ -1,5 +1,6 @@
 "use client"
 
+import { Suspense } from 'react'
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Scale, Eye, EyeOff, Check, X, RefreshCw, Copy } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     name: '',
@@ -499,5 +500,13 @@ export default function RegisterPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center">Loading...</div>}>
+      <RegisterForm />
+    </Suspense>
   )
 }

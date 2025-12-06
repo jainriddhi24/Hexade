@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getCurrentUser, requireAuth } from '@/lib/auth'
-import { UserRole } from '@prisma/client'
+
+// User roles
+const UserRole = {
+  CLIENT: 'CLIENT',
+  LAWYER: 'LAWYER',
+  JUDGE: 'JUDGE',
+  ADMIN: 'ADMIN',
+} as const
+type UserRoleType = typeof UserRole[keyof typeof UserRole]
 
 // In-memory store for WebRTC signaling (in production, use Redis)
 const signalingStore = new Map<string, {

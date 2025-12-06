@@ -1,8 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { getCurrentUser, requireAuth } from '@/lib/auth'
-import { UserRole } from '@prisma/client'
 import { z } from 'zod'
+
+// User roles
+const UserRole = {
+  CLIENT: 'CLIENT',
+  LAWYER: 'LAWYER',
+  JUDGE: 'JUDGE',
+  ADMIN: 'ADMIN',
+} as const
+type UserRoleType = typeof UserRole[keyof typeof UserRole]
 
 // AI Provider abstraction
 interface AIProvider {

@@ -143,15 +143,15 @@ export default function DocumentsPage() {
     }
   }
 
-  const handleDownload = async (document: Document) => {
+  const handleDownload = async (doc: any) => {
     try {
-      const response = await fetch(`/api/documents/${document.id}/download`)
+      const response = await fetch(`/api/documents/${doc.id}/download`)
       if (response.ok) {
         const blob = await response.blob()
         const url = window.URL.createObjectURL(blob)
         const a = document.createElement('a')
         a.href = url
-        a.download = document.title
+        a.download = doc.title
         document.body.appendChild(a)
         a.click()
         window.URL.revokeObjectURL(url)
@@ -328,19 +328,10 @@ export default function DocumentsPage() {
                     </Badge>
                   )}
 
-                  {document.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-3">
-                      {document.tags.slice(0, 3).map((tag, index) => (
-                        <Badge key={index} variant="secondary" className="text-xs">
-                          {tag}
-                        </Badge>
-                      ))}
-                      {document.tags.length > 3 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{document.tags.length - 3}
-                        </Badge>
-                      )}
-                    </div>
+                  {(document as any).documentType && (
+                    <Badge variant="outline" className="text-xs mb-3">
+                      {(document as any).documentType}
+                    </Badge>
                   )}
 
                   <div className="flex items-center justify-between">
@@ -348,7 +339,7 @@ export default function DocumentsPage() {
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => window.open(document.fileUrl, '_blank')}
+                        onClick={() => window.open((document as any).s3Url || '', '_blank')}
                       >
                         <Eye className="h-3 w-3" />
                       </Button>
@@ -359,7 +350,7 @@ export default function DocumentsPage() {
                       >
                         <Download className="h-3 w-3" />
                       </Button>
-                      {!document.isSigned && (
+                      {!(document as any).signedAt && (
                         <Button
                           size="sm"
                           variant="outline"
@@ -374,18 +365,14 @@ export default function DocumentsPage() {
                     </span>
                   </div>
 
-                  {document.signatures.length > 0 && (
+                  {(document as any).signedAt && (
                     <div className="mt-3 pt-3 border-t">
-                      <p className="text-xs text-gray-600 mb-2">Signatures:</p>
-                      <div className="space-y-1">
-                        {document.signatures.map((signature) => (
-                          <div key={signature.id} className="flex items-center justify-between text-xs">
-                            <span className="text-gray-600">{signature.signerName}</span>
-                            <span className="text-gray-500">
-                              {new Date(signature.signedAt).toLocaleDateString()}
-                            </span>
-                          </div>
-                        ))}
+                      <p className="text-xs text-gray-600 mb-2">Signed:</p>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-gray-600">{(document as any).signedBy?.name || 'Unknown'}</span>
+                        <span className="text-gray-500">
+                          {new Date((document as any).signedAt).toLocaleDateString()}
+                        </span>
                       </div>
                     </div>
                   )}

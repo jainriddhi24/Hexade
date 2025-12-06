@@ -14,7 +14,7 @@ const updateHearingSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const hearingId = params.id
+    const { id: hearingId } = await params
 
     const hearing = await prisma.hearing.findUnique({
       where: { id: hearingId },
@@ -103,7 +103,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -111,7 +111,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const hearingId = params.id
+    const { id: hearingId } = await params
     const body = await request.json()
     const updateData = updateHearingSchema.parse(body)
 
@@ -190,7 +190,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -198,7 +198,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const hearingId = params.id
+    const { id: hearingId } = await params
 
     // Check if hearing exists and user has access
     const existingHearing = await prisma.hearing.findUnique({

@@ -26,7 +26,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -34,7 +34,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = context.params instanceof Promise ? await context.params : context.params
+    const params = await context.params
     const caseId = params.id
 
     const caseData = await prisma.case.findUnique({
@@ -84,7 +84,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -92,7 +92,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = context.params instanceof Promise ? await context.params : context.params
+    const params = await context.params
     const caseId = params.id
 
     const body = await request.json()
@@ -156,7 +156,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -164,7 +164,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const params = context.params instanceof Promise ? await context.params : context.params
+    const params = await context.params
     const caseId = params.id
 
     const existingCase = await prisma.case.findUnique({ where: { id: caseId } })

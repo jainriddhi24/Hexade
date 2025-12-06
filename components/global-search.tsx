@@ -14,8 +14,7 @@ import {
   Calendar,
   Clock,
   User,
-  Case,
-  Document,
+  Briefcase,
   MessageCircle
 } from 'lucide-react'
 
@@ -178,9 +177,9 @@ export function GlobalSearch({ placeholder = "Search everything...", className =
 
   const getResultIcon = (type: string) => {
     switch (type) {
-      case 'case': return Case
+      case 'case': return Briefcase
       case 'hearing': return Video
-      case 'document': return Document
+      case 'document': return FileText
       case 'message': return MessageCircle
       case 'user': return User
       default: return FileText

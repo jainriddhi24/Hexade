@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
       where: { id: data.documentId },
       include: { 
         case: true,
-        signatures: true
+        signedBy: true
       }
     })
 
@@ -46,8 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already signed by this user
-    const existingSignature = document.signatures.find(sig => sig.signerId === user.id)
-    if (existingSignature) {
+    if (document.signedById === user.id) {
       return NextResponse.json({ error: 'Document already signed by you' }, { status: 400 })
     }
 
@@ -64,36 +63,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: signatureResult.error }, { status: 500 })
     }
 
-    // Save signature record
-    const signature = await prisma.documentSignature.create({
-      data: {
-        documentId: data.documentId,
-        signerId: user.id,
-        signerName: data.signerName,
-        signerEmail: data.signerEmail,
-        signatureData: data.signatureData,
-        signatureType: data.signatureType,
-        reason: data.reason,
-        signedAt: new Date(),
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown',
-        userAgent: request.headers.get('user-agent') || 'unknown',
-      }
-    })
-
-    // Update document as signed
-    await prisma.document.update({
+    // Save signature record by updating the document
+    const updatedDocument = await prisma.document.update({
       where: { id: data.documentId },
       data: { 
-        isSigned: true,
-        signedDocumentUrl: signatureResult.url,
-        signedAt: new Date()
+        signedById: user.id,
+        signedAt: new Date(),
+        signerStatus: 'SIGNED'
       }
     })
 
     return NextResponse.json({ 
       success: true, 
-      signature,
-      signedDocumentUrl: signatureResult.url,
+      document: updatedDocument,
       message: 'Document signed successfully'
     })
   } catch (error) {
@@ -125,22 +107,29 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Document ID is required' }, { status: 400 })
     }
 
-    // Get document signatures
-    const signatures = await prisma.documentSignature.findMany({
-      where: { documentId },
-      include: {
-        signer: {
+    // Get document signing info
+    const document = await prisma.document.findUnique({
+      where: { id: documentId },
+      select: {
+        id: true,
+        title: true,
+        signedAt: true,
+        signerStatus: true,
+        signedBy: {
           select: { id: true, name: true, email: true }
         }
-      },
-      orderBy: { signedAt: 'desc' }
+      }
     })
 
-    return NextResponse.json({ signatures })
+    if (!document) {
+      return NextResponse.json({ error: 'Document not found' }, { status: 404 })
+    }
+
+    return NextResponse.json({ document })
   } catch (error) {
-    console.error('Get signatures error:', error)
+    console.error('Get document signing info error:', error)
     return NextResponse.json(
-      { error: 'Failed to fetch signatures' },
+      { error: 'Failed to fetch signing info' },
       { status: 500 }
     )
   }

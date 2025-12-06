@@ -14,7 +14,7 @@ const updateClientSchema = z.object({
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -22,7 +22,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
 
     // Check if user has access to this client
     let hasAccess = false
@@ -57,7 +57,7 @@ export async function GET(
         company: true,
         notes: true,
         createdAt: true,
-        cases: {
+        casesAsClient: {
           include: {
             assignedLawyer: {
               select: { id: true, name: true, email: true }
@@ -91,7 +91,7 @@ export async function GET(
       }
     })
 
-    const activeCases = client.cases.filter(c => 
+    const activeCases = client.casesAsClient.filter(c => 
       ['FILED', 'ASSIGNED', 'IN_PROGRESS', 'HEARING_SCHEDULED'].includes(c.status)
     ).length
 
@@ -99,7 +99,7 @@ export async function GET(
       ...client,
       totalBilling: totalBilling._sum.estimatedValue || 0,
       activeCases,
-      totalCases: client.cases.length
+      totalCases: client.casesAsClient.length
     }
 
     return NextResponse.json(clientWithMetrics)
@@ -114,7 +114,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -122,7 +122,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
     const body = await request.json()
     const updateData = updateClientSchema.parse(body)
 
@@ -193,7 +193,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -201,7 +201,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const clientId = params.id
+    const { id: clientId } = await params
 
     // Check if client exists
     const existingClient = await prisma.user.findUnique({

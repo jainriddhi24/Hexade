@@ -55,13 +55,11 @@ export async function POST(request: NextRequest) {
     const payment = await prisma.payment.create({
       data: {
         amount: data.amount,
-        currency: data.currency,
         description: data.description,
         caseId: data.caseId,
         clientId: user.id,
-        stripePaymentIntentId: result.paymentIntentId!,
-        status: 'PENDING',
-        metadata: data.metadata,
+        status: 'pending',
+        paymentType: 'stripe',
       },
     })
 

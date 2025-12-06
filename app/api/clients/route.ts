@@ -225,7 +225,7 @@ export async function POST(request: NextRequest) {
         company,
         notes,
         role: 'CLIENT',
-        emailVerified: true, // Auto-verify for lawyer-created clients
+        emailVerifiedAt: new Date(), // Auto-verify for lawyer-created clients
         passwordHash: hashedPassword
       },
       select: {

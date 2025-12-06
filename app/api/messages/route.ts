@@ -93,7 +93,7 @@ async function generateComprehensiveReply(
   // Get additional case information
   const caseDocuments = await prisma.document.findMany({
     where: { caseId: caseData.id },
-    select: { id: true, title: true, type: true, createdAt: true }
+    select: { id: true, title: true, documentType: true, createdAt: true }
   })
 
   const upcomingHearings = await prisma.hearing.findMany({
@@ -158,7 +158,7 @@ async function generateComprehensiveReply(
         hour: '2-digit',
         minute: '2-digit'
       })
-      response += `${index + 1}. ${date} - ${h.type || 'Hearing'}\n`
+      response += `${index + 1}. ${date} - ${h.agenda || h.status || 'Hearing'}\n`
     })
     response += `\n`
   }
@@ -168,7 +168,7 @@ async function generateComprehensiveReply(
     response += `📄 **AVAILABLE DOCUMENTS:**\n`
     caseDocuments.slice(0, 5).forEach((doc, index) => {
       const date = new Date(doc.createdAt).toLocaleDateString('en-IN')
-      response += `${index + 1}. ${doc.title} (${doc.type}) - ${date}\n`
+      response += `${index + 1}. ${doc.title} (${doc.documentType}) - ${date}\n`
     })
     if (caseDocuments.length > 5) {
       response += `... and ${caseDocuments.length - 5} more documents\n`

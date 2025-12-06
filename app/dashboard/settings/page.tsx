@@ -27,15 +27,16 @@ export default function SettingsPage() {
   const { user } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const userData = user as any
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    bio: user?.bio || '',
-    language: user?.language || 'en',
-    timezone: user?.timezone || 'UTC',
-    emailNotifications: user?.emailNotifications ?? true,
-    smsNotifications: user?.smsNotifications ?? false,
+    name: userData?.name || '',
+    email: userData?.email || '',
+    phone: userData?.phone || '',
+    bio: userData?.bio || '',
+    language: userData?.language || 'en',
+    timezone: userData?.timezone || 'UTC',
+    emailNotifications: userData?.emailNotifications ?? true,
+    smsNotifications: userData?.smsNotifications ?? false,
   })
 
   if (!user) return null
@@ -49,14 +50,14 @@ export default function SettingsPage() {
 
   const handleCancel = () => {
     setFormData({
-      name: user.name || '',
-      email: user.email || '',
-      phone: user.phone || '',
-      bio: user.bio || '',
-      language: user.language || 'en',
-      timezone: user.timezone || 'UTC',
-      emailNotifications: user.emailNotifications ?? true,
-      smsNotifications: user.smsNotifications ?? false,
+      name: userData.name || '',
+      email: userData.email || '',
+      phone: userData.phone || '',
+      bio: userData.bio || '',
+      language: userData.language || 'en',
+      timezone: userData.timezone || 'UTC',
+      emailNotifications: userData.emailNotifications ?? true,
+      smsNotifications: userData.smsNotifications ?? false,
     })
     setIsEditing(false)
   }
@@ -257,7 +258,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between">
                 <span className="text-sm text-gray-600">Member Since</span>
                 <span className="text-sm font-medium">
-                  {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}
+                  {userData.createdAt ? new Date(userData.createdAt).toLocaleDateString() : 'N/A'}
                 </span>
               </div>
             </CardContent>

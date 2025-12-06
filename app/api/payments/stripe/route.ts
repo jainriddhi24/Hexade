@@ -45,7 +45,8 @@ export async function POST(request: NextRequest) {
       finalAmount = hourlyRate * duration
       billingDescription = `${description} (${duration} hours @ $${hourlyRate}/hour)`
     } else if (paymentType === 'subscription') {
-      finalAmount = rolePricing[userRole as keyof typeof rolePricing]?.subscription || 99.99
+      const pricing = rolePricing[userRole as keyof typeof rolePricing]
+      finalAmount = (pricing && 'subscription' in pricing) ? pricing.subscription : 99.99
       if (billingCycle === 'yearly') {
         finalAmount = finalAmount * 12 * 0.8 // 20% discount for yearly
         billingDescription = `${description} (Annual - 20% off)`
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
         billingDescription = `${description} (Monthly)`
       }
     } else if (paymentType === 'ai_package') {
-      finalAmount = rolePricing[userRole as keyof typeof rolePricing]?.ai_package || 199.99
+      const pricing = rolePricing[userRole as keyof typeof rolePricing]
+      finalAmount = (pricing && 'ai_package' in pricing) ? pricing.ai_package : 199.99
     }
 
     // Mock Stripe payment processing

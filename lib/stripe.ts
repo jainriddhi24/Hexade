@@ -5,7 +5,7 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-08-27.basil',
 })
 
 export interface PaymentIntentData {
@@ -80,7 +80,7 @@ export async function createSubscription(data: SubscriptionData) {
     return {
       success: true,
       subscriptionId: subscription.id,
-      clientSecret: (subscription.latest_invoice as Stripe.Invoice)?.payment_intent?.client_secret,
+      clientSecret: (subscription.latest_invoice as any)?.payment_intent?.client_secret,
     }
   } catch (error) {
     console.error('Stripe subscription error:', error)

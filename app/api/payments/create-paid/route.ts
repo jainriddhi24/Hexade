@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         paymentType,
         status: 'paid',
         transactionId,
-        clientId: user.role === 'CLIENT' ? user.id : undefined,
+        clientId: user.id,
         lawyerId: user.role === 'LAWYER' ? user.id : undefined,
         judgeId: user.role === 'JUDGE' ? user.id : undefined,
         caseId,

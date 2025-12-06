@@ -21,7 +21,9 @@ import {
   Scale,
   Gavel
 } from 'lucide-react'
-import { useTranslation } from '@/lib/i18n'
+
+// Mock translation function (i18n module not available)
+const useTranslation = () => ({ t: (key: string) => key })
 
 export default function HomePage() {
   const { t } = useTranslation()

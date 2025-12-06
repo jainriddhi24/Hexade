@@ -289,7 +289,7 @@ async function getDocumentsAnalytics(startDate: Date, endDate: Date, documentWhe
   const [documentsByType, documentsByMonth, signedDocuments] = await Promise.all([
     // Documents by type
     prisma.document.groupBy({
-      by: ['fileType'],
+      by: ['documentType'],
       where: { ...documentWhere, createdAt: { gte: startDate } },
       _count: { id: true },
     }),
@@ -384,10 +384,10 @@ async function getUsersAnalytics(startDate: Date, endDate: Date) {
       ORDER BY month
     `,
     
-    // Active users (users who have logged in recently)
+    // Active users (users who have been active recently)
     prisma.user.count({
       where: { 
-        lastLoginAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
+        updatedAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } // Last 30 days
       },
     }),
   ])

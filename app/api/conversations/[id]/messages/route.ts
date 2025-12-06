@@ -4,7 +4,7 @@ import { getCurrentUser } from '@/lib/auth'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser(request)
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const conversationId = params.id
+    const { id: conversationId } = await params
 
     // AI Legal Assistant welcome messages
     const now = new Date()
