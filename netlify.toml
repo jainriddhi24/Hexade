@@ -1,6 +1,12 @@
 [build]
   command = "npm run build"
   publish = ".next"
+  
+[build.processing]
+  skip_processing = false
+
+[functions]
+  node_bundler = "esbuild"
 
 [build.environment]
   NEXT_TELEMETRY_DISABLED = "1"
