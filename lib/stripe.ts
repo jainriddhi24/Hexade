@@ -1,12 +1,19 @@
 import Stripe from 'stripe'
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('STRIPE_SECRET_KEY is not set')
-}
+let stripe: Stripe | null = null
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2025-08-27.basil',
-})
+function getStripe(): Stripe {
+  if (!stripe) {
+    const secretKey = process.env.STRIPE_SECRET_KEY
+    if (!secretKey) {
+      throw new Error('STRIPE_SECRET_KEY is not set')
+    }
+    stripe = new Stripe(secretKey, {
+      apiVersion: '2025-08-27.basil',
+    })
+  }
+  return stripe
+}
 
 export interface PaymentIntentData {
   amount: number
@@ -26,7 +33,7 @@ export interface SubscriptionData {
 
 export async function createPaymentIntent(data: PaymentIntentData) {
   try {
-    const paymentIntent = await stripe.paymentIntents.create({
+    const paymentIntent = await getStripe().paymentIntents.create({
       amount: data.amount,
       currency: data.currency,
       automatic_payment_methods: {
@@ -57,14 +64,14 @@ export async function createPaymentIntent(data: PaymentIntentData) {
 export async function createSubscription(data: SubscriptionData) {
   try {
     // Create customer if not exists
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       metadata: {
         clientId: data.clientId,
         caseId: data.caseId || '',
       },
     })
 
-    const subscription = await stripe.subscriptions.create({
+    const subscription = await getStripe().subscriptions.create({
       customer: customer.id,
       items: [{ price: data.priceId }],
       metadata: {
@@ -100,7 +107,7 @@ export async function createCheckoutSession(data: {
   metadata?: Record<string, string>
 }) {
   try {
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       mode: 'subscription',
       payment_method_types: ['card'],
       line_items: [
@@ -134,7 +141,7 @@ export async function createCheckoutSession(data: {
 
 export async function getPaymentIntent(paymentIntentId: string) {
   try {
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId)
+    const paymentIntent = await getStripe().paymentIntents.retrieve(paymentIntentId)
     return {
       success: true,
       paymentIntent,
@@ -150,7 +157,7 @@ export async function getPaymentIntent(paymentIntentId: string) {
 
 export async function getSubscription(subscriptionId: string) {
   try {
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+    const subscription = await getStripe().subscriptions.retrieve(subscriptionId)
     return {
       success: true,
       subscription,
@@ -166,7 +173,7 @@ export async function getSubscription(subscriptionId: string) {
 
 export async function cancelSubscription(subscriptionId: string) {
   try {
-    const subscription = await stripe.subscriptions.cancel(subscriptionId)
+    const subscription = await getStripe().subscriptions.cancel(subscriptionId)
     return {
       success: true,
       subscription,
@@ -183,7 +190,7 @@ export async function cancelSubscription(subscriptionId: string) {
 // Webhook signature verification
 export function verifyWebhookSignature(payload: string, signature: string) {
   try {
-    const event = stripe.webhooks.constructEvent(
+    const event = getStripe().webhooks.constructEvent(
       payload,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
